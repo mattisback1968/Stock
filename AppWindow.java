@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 public class AppWindow extends JFrame {
 
     public AppWindow() {
-        setTitle("Mélodie en sous-sol");
+        setTitle("M\u00e9lodie en sous-sol");
         setSize(800, 500);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

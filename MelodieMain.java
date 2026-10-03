@@ -16,7 +16,7 @@ public class MelodieMain implements ActionListener {
     }
 
     public static void connexion() {
-        jframe = new JFrame("Connexion à Mélodie");
+        jframe = new JFrame("Connexion \u00e0 M\u00e9lodie");
         jframe.setSize(350, 200);
         jframe.setLocationRelativeTo(null);
         jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -54,16 +54,17 @@ public class MelodieMain implements ActionListener {
         jframe.setVisible(true);
     }
 
-    @Override
+        @Override
     public void actionPerformed(ActionEvent e) {
         String mdp = String.valueOf(motDePasse.getPassword());
         
         if (mdp.equals("Listing//2021+") || mdp.equals("admin")) {
-            success.setText("Connexion établie.");
-            jframe.dispose(); // Ferme le login
+            // Connexion etablie avec sequence Unicode pour securiser l affichage
+            success.setText("Connexion \u00e9tablie.");
+            jframe.dispose(); 
 
             try {
-                // ?? Déclenchement de la base et de la fenêtre générale clean !
+                // Declenchement securise de la base et de la fenetre generale
                 DatabaseManager.getConnection();
                 
                 AppWindow principale = new AppWindow();
@@ -73,6 +74,7 @@ public class MelodieMain implements ActionListener {
             }
         } else {
             nbTries++;
+            // Aucun accent ici non plus pour securiser la compilation
             success.setText("Mot de passe incorrect (" + nbTries + "/" + MAX_TRIES + ").");
             if (nbTries >= MAX_TRIES) {
                 JOptionPane.showMessageDialog(null, "Nombre maximal de tentatives atteint.", "Alerte", JOptionPane.WARNING_MESSAGE);
