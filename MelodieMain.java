@@ -1,6 +1,10 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 
 public class MelodieMain implements ActionListener {
 
@@ -29,9 +33,9 @@ public class MelodieMain implements ActionListener {
         login.setBounds(10, 20, 80, 25);
         panel.add(login);
 
-        utilisateur = new JTextField("eric");
+        utilisateur = new JTextField("");
         utilisateur.setBounds(100, 20, 165, 25);
-        utilisateur.setEditable(false);
+        utilisateur.setEditable(true);
         panel.add(utilisateur);
 
         JLabel passwordLabel = new JLabel("Mot de passe");
@@ -54,27 +58,43 @@ public class MelodieMain implements ActionListener {
         jframe.setVisible(true);
     }
 
-        @Override
+            @Override
     public void actionPerformed(ActionEvent e) {
         String mdp = String.valueOf(motDePasse.getPassword());
         
         if (mdp.equals("Listing//2021+") || mdp.equals("admin")) {
-            // Connexion etablie avec sequence Unicode pour securiser l affichage
             success.setText("Connexion \u00e9tablie.");
             jframe.dispose(); 
 
             try {
-                // Declenchement securise de la base et de la fenetre generale
-                DatabaseManager.getConnection();
+                // 1. Connexion à PostgreSQL via le manager sécurisé
+                Connection connectionValide = DatabaseManager.getConnection();
                 
-                AppWindow principale = new AppWindow();
+                // 2. Extraction du rôle pour l'utilisateur connecté (par défaut : employee)
+                String roleRecupere = "employee"; 
+                String userSaisi = utilisateur.getText();
+                
+                String query = "SELECT role FROM users WHERE username = ?";
+                try (PreparedStatement pstmt = connectionValide.prepareStatement(query)) {
+                    pstmt.setString(1, userSaisi);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            roleRecupere = rs.getString("role");
+                        }
+                    }
+                }
+
+                System.out.println("\ud83d\udd11 Profil d\u00e9tect\u00e9 : " + roleRecupere);
+
+                // 3. On passe le rôle récupéré au constructeur de la fenêtre principale !
+                AppWindow principale = new AppWindow(roleRecupere);
                 principale.setVisible(true);
+
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, "Erreur d'initialisation :\n" + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         } else {
             nbTries++;
-            // Aucun accent ici non plus pour securiser la compilation
             success.setText("Mot de passe incorrect (" + nbTries + "/" + MAX_TRIES + ").");
             if (nbTries >= MAX_TRIES) {
                 JOptionPane.showMessageDialog(null, "Nombre maximal de tentatives atteint.", "Alerte", JOptionPane.WARNING_MESSAGE);
@@ -83,3 +103,4 @@ public class MelodieMain implements ActionListener {
         }
     }
 }
+

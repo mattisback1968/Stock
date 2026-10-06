@@ -4,13 +4,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
 public class AppWindow extends JFrame {
 
-    public AppWindow() {
+    // ✅ Le constructeur accepte désormais le rôle transmis par MelodieMain
+    public AppWindow(String userRole) {
         setTitle("M\u00e9lodie en sous-sol");
         setSize(800, 500);
         setLocationRelativeTo(null);
@@ -33,22 +33,37 @@ public class AppWindow extends JFrame {
         menuFichier.add(quitter);
 
         // --- MENU ÉDITION ---
-        JMenu menuEdition = new JMenu("Édition");
+        JMenu menuEdition = new JMenu("\u00c9dition"); // Unicode pour Édition
         JMenuItem itemAfficherTout = new JMenuItem("Afficher tout");
         JMenuItem itemChercherTitre = new JMenuItem("Chercher par Titre");
         JMenuItem itemChercherArtiste = new JMenuItem("Chercher par Artiste");
         
-        // Appel de la recherche
+        JMenuItem itemAjouter = new JMenuItem("Ajouter Nouvel album");
+        JMenuItem itemSupprimer = new JMenuItem("Supprimer Album");
+
+        // Raccordement de la recherche
         itemChercherArtiste.addActionListener(e -> rechercheArtiste());
+
+        // ===================================================
+        // 🔐 CYBERSÉCURITÉ : PRINCIPE DU MOINDRE PRIVILÈGE
+        // ===================================================
+        // Si l'utilisateur connecté n'est pas 'admin', on applique le correctif graphique !
+        if (!"admin".equalsIgnoreCase(userRole)) {
+            itemAjouter.setEnabled(false);   // <-- Totalement grisé et inclickable !
+            itemSupprimer.setEnabled(false); // <-- Totalement grisé et inclickable !
+        }
 
         menuEdition.add(itemAfficherTout);
         menuEdition.add(itemChercherTitre);
         menuEdition.add(itemChercherArtiste);
+        menuEdition.addSeparator();
+        menuEdition.add(itemAjouter);
+        menuEdition.add(itemSupprimer);
 
         // --- MENU AIDE ---
         JMenu menuAide = new JMenu("Aide");
         JMenuItem aPropos = new JMenuItem("À propos");
-        aPropos.addActionListener(e -> JOptionPane.showMessageDialog(this, "Mélodie en sous-sol - Gestionnaire de Stock\nVersion Java/Swing Refactorisée 2026", "À propos", JOptionPane.INFORMATION_MESSAGE));
+        aPropos.addActionListener(e -> JOptionPane.showMessageDialog(this, "M\u00e9lodie en sous-sol - Gestionnaire de Stock\nVersion Java/Swing Securis\u00e9e 2026", "A propos", JOptionPane.INFORMATION_MESSAGE));
         menuAide.add(aPropos);
 
         barreMenu.add(menuFichier);
@@ -56,7 +71,6 @@ public class AppWindow extends JFrame {
         barreMenu.add(menuAide);
         setJMenuBar(barreMenu);
 
-        // Panneau central vide par défaut
         add(new JPanel(), BorderLayout.CENTER);
     }
 
@@ -89,9 +103,9 @@ public class AppWindow extends JFrame {
             }
             
             if (aucunResultat) {
-                JOptionPane.showMessageDialog(this, "Aucun disque trouvé.");
+                JOptionPane.showMessageDialog(this, "Aucun disque trouv\u00e9.");
             } else {
-                JFrame frameResultats = new JFrame("Résultats - " + nomArtiste);
+                JFrame frameResultats = new JFrame("R\u00e9sultats - " + nomArtiste);
                 frameResultats.setSize(700, 400);
                 frameResultats.setLocationRelativeTo(this);
                 
