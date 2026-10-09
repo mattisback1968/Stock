@@ -1,10 +1,11 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
+import javax.swing.*;
 
 public class MelodieMain implements ActionListener {
 
@@ -58,49 +59,80 @@ public class MelodieMain implements ActionListener {
         jframe.setVisible(true);
     }
 
-            @Override
-    public void actionPerformed(ActionEvent e) {
-        String mdp = String.valueOf(motDePasse.getPassword());
-        
-        if (mdp.equals("Listing//2021+") || mdp.equals("admin")) {
-            success.setText("Connexion \u00e9tablie.");
-            jframe.dispose(); 
+    // ===================================================
+    // ??? UTILITAIRE DE SÉCURITÉ : HACHAGE SHA-256 CORRIGÉ
+    // ===================================================
+    private String hacherSHA256(String motDePasseEnClair) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(motDePasseEnClair.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                hexString.append(String.format("%02x", b));
+            }
+            return hexString.toString();
+        } catch (Exception ex) {
+            throw new RuntimeException("Erreur de hachage", ex);
+        }
+    }
 
-            try {
-                // 1. Connexion à PostgreSQL via le manager sécurisé
-                Connection connectionValide = DatabaseManager.getConnection();
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String userSaisi = utilisateur.getText().trim();
+        String mdpSaisi = String.valueOf(motDePasse.getPassword());
+
+        if (userSaisi.isEmpty() || mdpSaisi.isEmpty()) {
+            success.setText("Veuillez remplir tous les champs.");
+            return;
+        }
+
+        try {
+            // 1. Connexion à PostgreSQL via le manager sécurisé
+            Connection connectionValide = DatabaseManager.getConnection();
+            
+            // 2. Extraction du mot de passe haché et du rôle pour l'utilisateur saisi
+            String query = "SELECT password, role FROM users WHERE username = ?";
+            try (PreparedStatement pstmt = connectionValide.prepareStatement(query)) {
+                pstmt.setString(1, userSaisi);
                 
-                // 2. Extraction du rôle pour l'utilisateur connecté (par défaut : employee)
-                String roleRecupere = "employee"; 
-                String userSaisi = utilisateur.getText();
-                
-                String query = "SELECT role FROM users WHERE username = ?";
-                try (PreparedStatement pstmt = connectionValide.prepareStatement(query)) {
-                    pstmt.setString(1, userSaisi);
-                    try (ResultSet rs = pstmt.executeQuery()) {
-                        if (rs.next()) {
-                            roleRecupere = rs.getString("role");
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        String hashBDD = rs.getString("password");
+                        String roleRecupere = rs.getString("role");
+                        
+                        // 3. Hachage du mot de passe saisi à l'écran
+                        String hashSaisie = hacherSHA256(mdpSaisi);
+                        
+                        // 4. Vérification cryptographique
+                        if (hashSaisie.equals(hashBDD)) {
+                            success.setText("Connexion \u00e9tablie.");
+                            jframe.dispose(); 
+
+                            System.out.println("\ud83d\udd11 Profil d\u00e9tect\u00e9 : " + roleRecupere);
+
+                            // 5. Passage du rôle au constructeur de l'application principale
+                            AppWindow principale = new AppWindow(roleRecupere);
+                            principale.setVisible(true);
+                            return; // Connexion réussie, on s'arrête là
                         }
                     }
                 }
-
-                System.out.println("\ud83d\udd11 Profil d\u00e9tect\u00e9 : " + roleRecupere);
-
-                // 3. On passe le rôle récupéré au constructeur de la fenêtre principale !
-                AppWindow principale = new AppWindow(roleRecupere);
-                principale.setVisible(true);
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, "Erreur d'initialisation :\n" + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             }
-        } else {
-            nbTries++;
-            success.setText("Mot de passe incorrect (" + nbTries + "/" + MAX_TRIES + ").");
-            if (nbTries >= MAX_TRIES) {
-                JOptionPane.showMessageDialog(null, "Nombre maximal de tentatives atteint.", "Alerte", JOptionPane.WARNING_MESSAGE);
-                System.exit(0);
-            }
+
+            // Si on arrive ici, l'utilisateur ou le mot de passe est incorrect
+            gestionEchecConnexion();
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Erreur d'initialisation :\n" + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void gestionEchecConnexion() {
+        nbTries++;
+        success.setText("Mot de passe incorrect (" + nbTries + "/" + MAX_TRIES + ").");
+        if (nbTries >= MAX_TRIES) {
+            JOptionPane.showMessageDialog(null, "Nombre maximal de tentatives atteint.", "Alerte", JOptionPane.WARNING_MESSAGE);
+            System.exit(0);
         }
     }
 }
-
