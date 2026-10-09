@@ -2,3 +2,16 @@ db.properties
 launch.java
 melodie_mdp_eric.txt
 .env
+
+# Fichiers de log peu importe le dossier
+*.log
+
+# Python (fichiers mis en cache et rapports d'erreur)
+__pycache__/
+*.pyc
+
+# VS Code (configurations locales)
+.vscode/
+
+*.txt
+

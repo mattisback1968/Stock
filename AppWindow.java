@@ -49,8 +49,8 @@ public class AppWindow extends JFrame {
         // ===================================================
         // Si l'utilisateur connecté n'est pas 'admin', on applique le correctif graphique !
         if (!"admin".equalsIgnoreCase(userRole)) {
-            itemAjouter.setEnabled(false);   // <-- Totalement grisé et inclickable !
-            itemSupprimer.setEnabled(false); // <-- Totalement grisé et inclickable !
+            itemAjouter.setEnabled(false);   // grisé et inclickable !
+            itemSupprimer.setEnabled(false); // Totalement grisé et inclickable !
         }
 
         menuEdition.add(itemAfficherTout);
